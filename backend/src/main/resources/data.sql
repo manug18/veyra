@@ -15,4 +15,19 @@ INSERT INTO plywood_variants (name, thickness, grade, finish_color, description,
 ('Birch Plywood', '18mm', 'E1', 'Birch White', 'Premium Baltic birch plywood for high-end cabinetry.', 17, 125.00, 'NOT_DISPATCHED'),
 ('Combi Core', '15mm', 'BWR', 'Mixed Grain', 'Combined hardwood-softwood core for balanced strength.', 28, 68.00, 'IN_TRANSIT'),
 ('Veneer Core', '12mm', 'MR', 'Rosewood Dark', 'Veneer-faced plywood with decorative rosewood finish.', 14, 99.00, 'IN_WAREHOUSE'),
+('Particle Board', '18mm', 'E2', 'Neutral Grey', 'Cost-effective particle board for lightweight interior use.', 45, 28.00, 'IN_WAREHOUSE')
+ON CONFLICT (name) DO NOTHING;
+
+('Decorative Laminate', '12mm', 'MR', 'Walnut Brown', 'Pre-laminated board with decorative finish for furniture.', 35, 62.00, 'NOT_DISPATCHED'),
+('Film Faced Shuttering', '18mm', 'BWP', 'Black Phenolic', 'Film-faced plywood for concrete shuttering and formwork.', 50, 88.00, 'IN_WAREHOUSE'),
+('Flexible Plywood', '4mm', 'MR', 'Teak Brown', 'Bendable plywood for curved furniture and partitions.', 18, 45.00, 'IN_TRANSIT'),
+('Fire Retardant', '12mm', 'FR', 'Ash Grey', 'Chemically treated fire-resistant plywood for safety applications.', 15, 115.00, 'IN_WAREHOUSE'),
+('Marine Plywood', '18mm', 'BWP', 'Mahogany Red', 'Highest quality marine-grade plywood for boats and wet areas.', 12, 140.00, 'IN_TRANSIT'),
+('Shuttering Plywood', '18mm', 'BWR', 'Dark Brown', 'Reusable shuttering board for civil construction use.', 60, 70.00, 'IN_WAREHOUSE'),
+('Blockboard', '19mm', 'MR', 'Light Cedar', 'Softwood core board ideal for doors, shelves, and panels.', 25, 58.00, 'NOT_DISPATCHED'),
+('Hardwood Core', '15mm', 'BWR', 'Cherry Red', 'Dense hardwood-core plywood for heavy-duty furniture.', 22, 82.00, 'IN_WAREHOUSE'),
+('Softwood Core', '12mm', 'MR', 'Pine Yellow', 'Lightweight softwood-core plywood for light partitions.', 33, 42.00, 'IN_WAREHOUSE'),
+('Birch Plywood', '18mm', 'E1', 'Birch White', 'Premium Baltic birch plywood for high-end cabinetry.', 17, 125.00, 'NOT_DISPATCHED'),
+('Combi Core', '15mm', 'BWR', 'Mixed Grain', 'Combined hardwood-softwood core for balanced strength.', 28, 68.00, 'IN_TRANSIT'),
+('Veneer Core', '12mm', 'MR', 'Rosewood Dark', 'Veneer-faced plywood with decorative rosewood finish.', 14, 99.00, 'IN_WAREHOUSE'),
 ('Particle Board', '18mm', 'E2', 'Neutral Grey', 'Cost-effective particle board for lightweight interior use.', 45, 28.00, 'IN_WAREHOUSE');

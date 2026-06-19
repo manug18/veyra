@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Entity
-@Table(name = "plywood_variants")
+@Table(name = "plywood_variants", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
