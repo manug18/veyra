@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryApiService } from '../../services/inventory-api.service';
@@ -62,8 +62,9 @@ import { Customer } from '../../shared/models';
     </section>
   `
 })
-export class CustomersPage {
+export class CustomersPage implements OnInit {
   customers: Customer[] = [];
+  loading = true;
   draft: Partial<Customer> = {
     companyName: '',
     contactName: '',
@@ -71,8 +72,18 @@ export class CustomersPage {
     phone: ''
   };
 
-  constructor(private readonly api: InventoryApiService) {
-    this.customers = this.api.getCustomers();
+  constructor(private readonly api: InventoryApiService) {}
+
+  ngOnInit(): void {
+    this.loadCustomers();
+  }
+
+  private loadCustomers(): void {
+    this.loading = true;
+    this.api.getCustomers().subscribe({
+      next: (c) => { this.customers = c; this.loading = false; },
+      error: () => { this.loading = false; }
+    });
   }
 
   canAddCustomer(): boolean {
@@ -80,19 +91,15 @@ export class CustomersPage {
   }
 
   addCustomer() {
-    if (!this.canAddCustomer()) {
-      return;
-    }
-
+    if (!this.canAddCustomer()) return;
     this.api.addCustomer({
-      id: 0,
       companyName: this.draft.companyName!.trim(),
       contactName: this.draft.contactName!.trim(),
       email: this.draft.email!.trim(),
       phone: this.draft.phone!.trim()
+    }).subscribe({
+      next: () => { this.loadCustomers(); this.draft = { companyName: '', contactName: '', email: '', phone: '' }; },
+      error: () => {}
     });
-
-    this.customers = this.api.getCustomers();
-    this.draft = { companyName: '', contactName: '', email: '', phone: '' };
   }
 }

@@ -1,24 +1,24 @@
-export interface Product {
-  id: number;
-  name: string;
-  sku: string;
-  category: string;
-  stock: number;
-  price: number;
-  orderQuantity?: number;
-  status?: 'In Transit' | 'In Warehouse' | 'Not Dispatched';
-}
-
 export interface PlywoodType {
   id: number;
   name: string;
   thickness: string;
   grade: string;
+  finishColor?: string;
   stock: number;
   pricePerSheet: number;
   description: string;
   orderQuantity?: number;
   status?: 'In Transit' | 'In Warehouse' | 'Not Dispatched';
+}
+
+export interface PlywoodViewerType {
+  id: number;
+  name: string;
+  thickness: string;
+  grade: string;
+  finishColor?: string;
+  description: string;
+  status?: string;
 }
 
 export interface InventoryItem {
@@ -27,14 +27,6 @@ export interface InventoryItem {
   item: string;
   quantity: number;
   reserved: number;
-}
-
-export interface Supplier {
-  id: number;
-  name: string;
-  contact: string;
-  phone: string;
-  email: string;
 }
 
 export interface Customer {
@@ -66,4 +58,13 @@ export interface DashboardStat {
   label: string;
   value: string;
   description: string;
+}
+
+export interface DashboardStats {
+  totalVariants: number;
+  inWarehouse: number;
+  inTransit: number;
+  notDispatched: number;
+  totalCustomers: number;
+  totalOrders: number;
 }

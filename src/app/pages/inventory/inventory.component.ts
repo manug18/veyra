@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { InventoryApiService } from '../../services/inventory-api.service';
 import { InventoryItem } from '../../shared/models';
 
 @Component({
@@ -42,9 +41,10 @@ import { InventoryItem } from '../../shared/models';
   `
 })
 export class InventoryPage {
-  inventory: InventoryItem[] = [];
-
-  constructor(private readonly api: InventoryApiService) {
-    this.inventory = this.api.getInventory();
-  }
+  inventory: InventoryItem[] = [
+    { id: 1, warehouse: 'Mumbai HQ', item: 'Exterior BWR (12mm)', quantity: 40, reserved: 5 },
+    { id: 2, warehouse: 'Delhi Warehouse', item: 'Marine Plywood (18mm)', quantity: 12, reserved: 2 },
+    { id: 3, warehouse: 'Bangalore Hub', item: 'Film Faced Shuttering', quantity: 50, reserved: 10 },
+    { id: 4, warehouse: 'Mumbai HQ', item: 'Birch Plywood (18mm)', quantity: 17, reserved: 3 },
+  ];
 }

@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryApiService } from '../../services/inventory-api.service';
-import { PlywoodType, Product } from '../../shared/models';
+import { PlywoodType } from '../../shared/models';
 
 const STATUSES = ['In Warehouse', 'In Transit', 'Not Dispatched'] as const;
 type Status = typeof STATUSES[number] | 'All';
@@ -81,6 +81,8 @@ type Status = typeof STATUSES[number] | 'All';
       </div>
 
       <!-- Plywood cards -->
+      <div *ngIf="loading" class="text-center py-5 text-muted">Loading variants...</div>
+      <ng-container *ngIf="!loading">
       <div class="section-label">{{ filteredLabel }} &mdash; {{ filteredTypes.length }} of {{ plywoodTypes.length }} variants</div>
       <div class="row g-3 mb-5">
         <ng-container *ngFor="let plywood of filteredTypes">
@@ -120,13 +122,15 @@ type Status = typeof STATUSES[number] | 'All';
       </div>
 
       <!-- Variants summary table (removed separate Products table - only one product now) -->
+      </ng-container>
 
     </section>
   `
 })
-export class ProductsPage {
+export class ProductsPage implements OnInit {
   plywoodTypes: PlywoodType[] = [];
   showForm = false;
+  loading = true;
   statuses = STATUSES;
   activeFilter: Status = 'In Warehouse';
 
@@ -139,8 +143,18 @@ export class ProductsPage {
 
   draft: Partial<PlywoodType> = this.emptyDraft();
 
-  constructor(private readonly api: InventoryApiService) {
-    this.plywoodTypes = this.api.getPlywoodTypes();
+  constructor(private readonly api: InventoryApiService) {}
+
+  ngOnInit(): void {
+    this.loadVariants();
+  }
+
+  private loadVariants(): void {
+    this.loading = true;
+    this.api.getPlywoodTypes().subscribe({
+      next: (types) => { this.plywoodTypes = types; this.loading = false; },
+      error: () => { this.loading = false; }
+    });
   }
 
   get filteredTypes(): PlywoodType[] {
@@ -171,10 +185,10 @@ export class ProductsPage {
 
   addProduct() {
     if (!this.canAdd()) return;
-    this.api.addPlywoodType(this.draft as PlywoodType);
-    this.plywoodTypes = this.api.getPlywoodTypes();
-    this.resetForm();
-    this.showForm = false;
+    this.api.addPlywoodType(this.draft as PlywoodType).subscribe({
+      next: () => { this.loadVariants(); this.resetForm(); this.showForm = false; },
+      error: () => {}
+    });
   }
 
   resetForm() {

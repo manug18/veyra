@@ -1,7 +1,5 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { InventoryApiService } from '../../services/inventory-api.service';
-import { Supplier } from '../../shared/models';
 
 @Component({
   standalone: true,
@@ -40,9 +38,5 @@ import { Supplier } from '../../shared/models';
   `
 })
 export class SuppliersPage {
-  suppliers: Supplier[] = [];
-
-  constructor(private readonly api: InventoryApiService) {
-    this.suppliers = this.api.getSuppliers();
-  }
+  suppliers: any[] = [];
 }

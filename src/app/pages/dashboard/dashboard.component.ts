@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InventoryApiService } from '../../services/inventory-api.service';
 import { DashboardStat } from '../../shared/models';
@@ -16,7 +16,9 @@ import { DashboardStat } from '../../shared/models';
         </div>
       </div>
 
-      <div class="stats-grid">
+      <div *ngIf="loading" class="text-center py-5 text-muted">Loading...</div>
+
+      <div *ngIf="!loading" class="stats-grid">
         <article class="stat-card" *ngFor="let stat of stats">
           <span class="stat-label">{{ stat.label }}</span>
           <strong>{{ stat.value }}</strong>
@@ -24,7 +26,7 @@ import { DashboardStat } from '../../shared/models';
         </article>
       </div>
 
-      <div class="overview-panel">
+      <div class="overview-panel" *ngIf="!loading">
         <h2>Quick start</h2>
         <p>
           Use <strong>Variants</strong> to manage your 17 plywood types and their stock.
@@ -35,10 +37,16 @@ import { DashboardStat } from '../../shared/models';
     </section>
   `
 })
-export class DashboardPage {
+export class DashboardPage implements OnInit {
   stats: DashboardStat[] = [];
+  loading = true;
 
-  constructor(private readonly api: InventoryApiService) {
-    this.stats = this.api.getDashboardStats();
+  constructor(private readonly api: InventoryApiService) {}
+
+  ngOnInit(): void {
+    this.api.getDashboardStats().subscribe({
+      next: (stats) => { this.stats = stats; this.loading = false; },
+      error: () => { this.loading = false; }
+    });
   }
 }

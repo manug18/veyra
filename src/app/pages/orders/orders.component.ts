@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryApiService } from '../../services/inventory-api.service';
@@ -130,7 +130,7 @@ import { Customer, Order, OrderItem, PlywoodType } from '../../shared/models';
     </section>
   `
 })
-export class OrdersPage {
+export class OrdersPage implements OnInit {
   customers: Customer[] = [];
   variants: PlywoodType[] = [];
   orders: Order[] = [];
@@ -140,10 +140,16 @@ export class OrdersPage {
   orderQuantity = 1;
   orderItems: OrderItem[] = [];
 
-  constructor(private readonly api: InventoryApiService) {
-    this.customers = this.api.getCustomers();
-    this.variants = this.api.getPlywoodTypes();
-    this.orders = this.api.getOrders();
+  constructor(private readonly api: InventoryApiService) {}
+
+  ngOnInit(): void {
+    this.api.getCustomers().subscribe((c) => (this.customers = c));
+    this.api.getPlywoodTypes().subscribe((v) => (this.variants = v));
+    this.loadOrders();
+  }
+
+  private loadOrders(): void {
+    this.api.getOrders().subscribe((o) => (this.orders = o));
   }
 
   get availableVariants(): PlywoodType[] {
@@ -189,20 +195,14 @@ export class OrdersPage {
 
   submitOrder() {
     if (!this.canSubmitOrder() || !this.selectedCustomerId) return;
-    const customer = this.customers.find((c) => c.id === this.selectedCustomerId);
-    if (!customer) return;
-    this.api.addOrder({
-      id: 0,
-      customerId: customer.id,
-      customerName: customer.companyName,
-      items: [...this.orderItems],
-      total: this.orderTotal(),
-      status: 'Pending',
-      createdOn: new Date()
+    this.api.addOrder(this.selectedCustomerId, this.orderItems).subscribe({
+      next: () => {
+        this.loadOrders();
+        this.orderItems = [];
+        this.selectedVariantId = null;
+        this.orderQuantity = 1;
+      },
+      error: () => {}
     });
-    this.orders = this.api.getOrders();
-    this.orderItems = [];
-    this.selectedVariantId = null;
-    this.orderQuantity = 1;
   }
 }

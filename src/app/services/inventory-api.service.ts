@@ -1,97 +1,114 @@
 import { Injectable } from '@angular/core';
-import { Customer, DashboardStat, InventoryItem, Order, PlywoodType, Product, Supplier } from '../shared/models';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
+import { Customer, DashboardStat, DashboardStats, Order, OrderItem, PlywoodType } from '../shared/models';
 
-@Injectable({
-  providedIn: 'root'
-})
+// Backend DTO shapes
+interface VariantAdminDto {
+  id: number; name: string; thickness: string; grade: string;
+  finishColor: string; description: string; stock: number;
+  pricePerSheet: number; status: string;
+}
+interface BackendCustomer { id: number; companyName: string; contactName: string; email: string; phone: string; }
+interface BackendOrder {
+  id: number; customerName: string; total: number; status: string; createdAt: string;
+  items: { variantId: number; variantName: string; quantity: number; unitPrice: number; }[];
+}
+interface BackendOrderRequest {
+  customerId: number;
+  items: { variantId: number; quantity: number; }[];
+}
+
+const BASE = 'http://localhost:8080/api';
+
+const STATUS_MAP: Record<string, PlywoodType['status']> = {
+  IN_WAREHOUSE: 'In Warehouse',
+  IN_TRANSIT: 'In Transit',
+  NOT_DISPATCHED: 'Not Dispatched',
+};
+const STATUS_REVERSE: Record<string, string> = {
+  'In Warehouse': 'IN_WAREHOUSE',
+  'In Transit': 'IN_TRANSIT',
+  'Not Dispatched': 'NOT_DISPATCHED',
+};
+
+@Injectable({ providedIn: 'root' })
 export class InventoryApiService {
-  private customers: Customer[] = [
-    { id: 1, companyName: 'Enterprise Tech Pvt Ltd', contactName: 'Sahil Verma', email: 'sahil@enterprisetech.com', phone: '+91 90000 11111' },
-    { id: 2, companyName: 'Campus Networks', contactName: 'Deepa Nair', email: 'deepa@campusnetworks.com', phone: '+91 90000 22222' },
-    { id: 3, companyName: 'Manufacturing One', contactName: 'Amit Joshi', email: 'amit@manufacturingone.com', phone: '+91 90000 33333' }
-  ];
 
-  private products: Product[] = [
-    {
-      id: 1,
-      name: 'Plywood Sheets (17 types)',
-      sku: 'PLY-17T',
-      category: 'Plywood',
-      stock: 150,
-      price: 45,
-      orderQuantity: 0,
-      status: 'In Warehouse'
-    }
-  ];
+  constructor(private http: HttpClient) {}
 
-  private plywoodTypes: PlywoodType[] = [
-    { id: 1, name: 'Exterior BWR', thickness: '12mm', grade: 'BWR', stock: 40, pricePerSheet: 52, description: 'Weather-resistant plywood for furniture and cabinets.', orderQuantity: 0, status: 'In Warehouse' },
-    { id: 2, name: 'Commercial BWP', thickness: '18mm', grade: 'BWP', stock: 28, pricePerSheet: 78, description: 'Moisture-proof plywood for construction and joinery.', orderQuantity: 0, status: 'In Transit' },
-    { id: 3, name: 'MR Grade', thickness: '9mm', grade: 'MR', stock: 30, pricePerSheet: 38, description: 'General-purpose interior plywood for panels and partitions.', orderQuantity: 0, status: 'Not Dispatched' },
-    { id: 4, name: 'Bamboo Plywood', thickness: '15mm', grade: 'Eco', stock: 18, pricePerSheet: 95, description: 'Eco-friendly plywood with high strength and smooth finish.', orderQuantity: 0, status: 'In Warehouse' },
-    { id: 5, name: 'Decorative Laminate', thickness: '12mm', grade: 'A', stock: 34, pricePerSheet: 88, description: 'Surface-ready plywood for premium furniture and fixtures.', orderQuantity: 0, status: 'In Transit' }
-  ];
-
-  private orders: Order[] = [];
-
-  getDashboardStats(): DashboardStat[] {
-    const inWarehouse = this.plywoodTypes.filter((p) => p.status === 'In Warehouse').length;
-    const inTransit = this.plywoodTypes.filter((p) => p.status === 'In Transit').length;
-    return [
-      { label: 'Plywood variants', value: String(this.plywoodTypes.length), description: 'Active variants of plywood' },
-      { label: 'In warehouse', value: String(inWarehouse), description: 'Variants available for order now' },
-      { label: 'In transit', value: String(inTransit), description: 'Variants currently in transit' },
-      { label: 'Customers', value: String(this.customers.length), description: 'Active B2B client accounts' }
-    ];
+  // --- Variants ---
+  getPlywoodTypes(): Observable<PlywoodType[]> {
+    return this.http.get<VariantAdminDto[]>(`${BASE}/variants`).pipe(
+      map((list) => list.map(this.toPlywood))
+    );
   }
 
-  getProducts(): Product[] {
-    return this.products;
+  addPlywoodType(v: Partial<PlywoodType>): Observable<PlywoodType> {
+    const body = {
+      id: null, name: v.name, thickness: v.thickness, grade: v.grade,
+      finishColor: v.finishColor ?? '', description: v.description,
+      stock: v.stock, pricePerSheet: v.pricePerSheet,
+      status: STATUS_REVERSE[v.status ?? 'In Warehouse'] ?? 'IN_WAREHOUSE'
+    };
+    return this.http.post<VariantAdminDto>(`${BASE}/variants`, body).pipe(
+      map(this.toPlywood)
+    );
   }
 
-  getPlywoodTypes(): PlywoodType[] {
-    return this.plywoodTypes;
+  // --- Customers ---
+  getCustomers(): Observable<Customer[]> {
+    return this.http.get<BackendCustomer[]>(`${BASE}/customers`);
   }
 
-  addPlywoodType(item: PlywoodType) {
-    const nextId = this.plywoodTypes.length
-      ? Math.max(...this.plywoodTypes.map((p) => p.id)) + 1
-      : 1;
-    this.plywoodTypes.push({ ...item, id: nextId, orderQuantity: 0 });
+  addCustomer(c: Omit<Customer, 'id'>): Observable<Customer> {
+    return this.http.post<BackendCustomer>(`${BASE}/customers`, c);
   }
 
-  getInventory(): InventoryItem[] {
-    return [
-      { id: 1, warehouse: 'Mumbai HQ', item: 'Industrial Router', quantity: 48, reserved: 8 },
-      { id: 2, warehouse: 'Delhi Warehouse', item: 'Rack Mount Switch', quantity: 20, reserved: 3 },
-      { id: 3, warehouse: 'Bangalore Hub', item: 'Server Chassis', quantity: 15, reserved: 6 },
-      { id: 4, warehouse: 'Mumbai HQ', item: 'UPS Backup', quantity: 68, reserved: 18 }
-    ];
+  // --- Orders ---
+  getOrders(): Observable<Order[]> {
+    return this.http.get<BackendOrder[]>(`${BASE}/orders`).pipe(
+      map((list) => list.map(this.toOrder))
+    );
   }
 
-  getSuppliers(): Supplier[] {
-    return [
-      { id: 1, name: 'Power Solutions Ltd.', contact: 'Rohit Sharma', phone: '+91 98765 43210', email: 'rohit@powersolutions.in' },
-      { id: 2, name: 'NetGear Distributors', contact: 'Priya Patel', phone: '+91 91234 56789', email: 'priya@netgeardist.com' },
-      { id: 3, name: 'Server Parts Co.', contact: 'Anil Mehra', phone: '+91 99887 66554', email: 'anil@serverparts.co' }
-    ];
+  addOrder(customerId: number, items: OrderItem[]): Observable<Order> {
+    const body: BackendOrderRequest = {
+      customerId,
+      items: items.map((i) => ({ variantId: i.productId, quantity: i.quantity }))
+    };
+    return this.http.post<BackendOrder>(`${BASE}/orders`, body).pipe(
+      map(this.toOrder)
+    );
   }
 
-  getCustomers(): Customer[] {
-    return this.customers;
+  // --- Dashboard ---
+  getDashboardStats(): Observable<DashboardStat[]> {
+    return this.http.get<DashboardStats>(`${BASE}/dashboard`).pipe(
+      map((s) => [
+        { label: 'Plywood variants', value: String(s.totalVariants), description: 'Active variants of plywood' },
+        { label: 'In warehouse', value: String(s.inWarehouse), description: 'Variants available for order now' },
+        { label: 'In transit', value: String(s.inTransit), description: 'Variants currently in transit' },
+        { label: 'Customers', value: String(s.totalCustomers), description: 'Active B2B client accounts' },
+        { label: 'Total orders', value: String(s.totalOrders), description: 'All orders placed' },
+      ])
+    );
   }
 
-  addCustomer(customer: Customer) {
-    const nextId = this.customers.length ? Math.max(...this.customers.map((item) => item.id)) + 1 : 1;
-    this.customers.push({ ...customer, id: nextId });
-  }
+  // --- Mappers ---
+  private toPlywood = (d: VariantAdminDto): PlywoodType => ({
+    id: d.id, name: d.name, thickness: d.thickness, grade: d.grade,
+    finishColor: d.finishColor, description: d.description,
+    stock: d.stock, pricePerSheet: d.pricePerSheet,
+    status: STATUS_MAP[d.status] ?? 'Not Dispatched',
+  });
 
-  getOrders(): Order[] {
-    return this.orders;
-  }
-
-  addOrder(order: Order) {
-    const nextId = this.orders.length ? Math.max(...this.orders.map((item) => item.id)) + 1 : 1;
-    this.orders.push({ ...order, id: nextId });
-  }
+  private toOrder = (d: BackendOrder): Order => ({
+    id: d.id, customerId: 0, customerName: d.customerName,
+    total: d.total, status: d.status, createdOn: new Date(d.createdAt),
+    items: d.items.map((i) => ({
+      productId: i.variantId, productName: i.variantName,
+      quantity: i.quantity, unitPrice: i.unitPrice,
+    })),
+  });
 }
